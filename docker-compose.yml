@@ -1,0 +1,70 @@
+services:
+  app:
+    build:
+      context: ./laravel-backend
+      dockerfile: Dockerfile
+    image: midterm_lab_exam_app
+    container_name: midterm_lab_exam_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./laravel-backend:/var/www/html
+    env_file:
+      - ./laravel-backend/.env
+    depends_on:
+      - db
+
+  web:
+    image: nginx:stable
+    container_name: midterm_lab_exam_web
+    restart: unless-stopped
+    ports:
+      - "8090:80"   # 🌐 CHANGE LEFT SIDE if 8080 is in use (e.g. "8888:80" or "8181:80")
+    volumes:
+      - ./laravel-backend:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: midterm_lab_exam_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravelpassword
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3310:3306"  # 🧩 CHANGE LEFT SIDE if you already have MySQL locally (e.g. "3308:3306")
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: midterm_lab_exam_pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+      UPLOAD_LIMIT: 256M
+    ports:
+      - "8091:80"    # 💻 CHANGE LEFT SIDE if 8081 is taken (e.g. "8182:80")
+    depends_on:
+      - db
+
+  node:
+    image: node:18
+    container_name: midterm_lab_exam_node
+    working_dir: /usr/src/app
+    volumes:
+      - ./react-frontend:/usr/src/app
+    ports:
+      - "3010:3000"  # ⚛️ CHANGE LEFT SIDE if your local React dev server uses 3000 (e.g. "3002:3000")
+    command: ["npm", "start"]
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+volumes:
+  dbdata:
