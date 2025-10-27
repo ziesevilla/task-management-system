@@ -2,64 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
 use Illuminate\Http\Request;
+use App\Models\Task;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    // GET /api/tasks - Return all tasks
+    public function index() {
+        return response()->json(Task::all(), 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    // GET /api/tasks/{id} - Return a single task
+    public function show($id) {
+        $task = Task::find($id);   
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+        return response()->json($task, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    // POST /api/tasks - Store a new task
+    public function store(Request $request) {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => ['required', Rule::in(['pending', 'in-progress', 'completed'])],
+            'due_date' => 'nullable|date',
+        ]);
+
+        $task = Task::create($validated);
+        return response()->json($task, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Task $task)
-    {
-        //
+    // PUT/PATCH /api/tasks/{id} - Update an existing task
+    public function update(Request $request, $id) {
+        $task = Task::find($id);
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'title' => 'string|max:255',
+            'description' => 'nullable|string',
+            'status' => ['nullable', Rule::in(['pending', 'in-progress', 'completed'])],
+            'due_date' => 'nullable|date',
+        ]);
+
+        $task->update($validated);
+        return response()->json($task, 200);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Task $task)
-    {
-        //
-    }
+    // DELETE /api/tasks/{id} - Delete a task
+    public function destroy($id) {
+        $task = Task::find($id);
+        if (!$task) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Task $task)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Task $task)
-    {
-        //
+        $task->delete();
+        return response()->json(['message' => 'Deleted successfully'], 200);
     }
 }
