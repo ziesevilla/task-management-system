@@ -1,35 +1,29 @@
 import React, { useState, useEffect } from "react";
 
 function StudentForm({ onSave, editingStudent }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    age: "",
-  });
+  const initialFormData = { name: "", email: "", age: "" };
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     if (editingStudent) {
       setFormData({
-        name: editingStudent.name,
-        email: editingStudent.email,
-        age: editingStudent.age,
+        name: editingStudent.name || "",
+        email: editingStudent.email || "",
+        age: editingStudent.age || "",
       });
     } else {
-      setFormData({ name: "", email: "", age: "" });
+      setFormData(initialFormData);
     }
   }, [editingStudent]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
-    setFormData({ name: "", email: "", age: "" });
+    setFormData(initialFormData);
   };
 
   return (

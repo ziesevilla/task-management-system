@@ -15,7 +15,7 @@ function StudentList({ students, onEdit, onDelete }) {
       <tbody>
         {students.length === 0 ? (
           <tr>
-            <td colSpan="5" className="text-center">
+            <td colSpan={5} className="text-center">
               No students found.
             </td>
           </tr>

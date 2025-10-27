@@ -1,88 +1,96 @@
 // src/components/StudentManager.js
 import React, { useEffect, useState } from "react";
 import { Table, Button, Form, Modal, Spinner, Alert } from "react-bootstrap";
-import api from "../api"; // use centralized axios
+import api from "../api"; // centralized axios
 
 const StudentManager = () => {
-  const [students, setStudents] = useState([]);
-  const [form, setForm] = useState({ name: "", email: "", age: "", course: "" });
+  const [tasks, setTasks] = useState([]);
+  const [form, setForm] = useState({ title: "", description: "", status: "pending", due_date: "" });
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch students from API
-  const fetchStudents = async () => {
+  // Fetch tasks from API
+  const fetchTasks = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/students");
-      setStudents(res.data);
+      const res = await api.get("/tasks");
+      setTasks(res.data);
       setError("");
     } catch (err) {
       console.error(err);
-      setError("Failed to load students.");
+      setError("Failed to load tasks.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStudents();
+    fetchTasks();
   }, []);
+
+  // Generic form change handler
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
   // Handle Add/Edit submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingId) {
-        await api.put(`/students/${editingId}`, form);
+        await api.put(`/tasks/${editingId}`, form);
       } else {
-        await api.post("/students", form);
+        await api.post("/tasks", form);
       }
-      setForm({ name: "", email: "", age: "", course: "" });
+      setForm({ title: "", description: "", status: "pending", due_date: "" });
       setEditingId(null);
       setShowModal(false);
-      fetchStudents();
+      fetchTasks();
     } catch (err) {
       console.error(err);
-      setError("Failed to save student.");
+      setError("Failed to save task.");
     }
   };
 
-  // Delete a student
+  // Delete a task
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this student?")) return;
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
-      await api.delete(`/students/${id}`);
-      fetchStudents();
+      await api.delete(`/tasks/${id}`);
+      fetchTasks();
     } catch (err) {
       console.error(err);
-      setError("Failed to delete student.");
+      setError("Failed to delete task.");
     }
   };
 
   // Open modal to edit
-  const handleEdit = (student) => {
-    setForm(student);
-    setEditingId(student.id);
+  const handleEdit = (task) => {
+    setForm(task);
+    setEditingId(task.id);
+    setError("");
     setShowModal(true);
   };
 
   // Open modal to add
   const handleAdd = () => {
-    setForm({ name: "", email: "", age: "", course: "" });
+    setForm({ title: "", description: "", status: "pending", due_date: "" });
     setEditingId(null);
+    setError("");
     setShowModal(true);
   };
 
   return (
     <div className="container mt-4">
-      <h2 className="text-center mb-4">Student Management</h2>
+      <h2 className="text-center mb-4">Task Management</h2>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Button onClick={handleAdd} className="mb-3">
-        Add Student
+        Add Task
       </Button>
 
       {loading ? (
@@ -94,35 +102,35 @@ const StudentManager = () => {
           <thead className="table-dark">
             <tr>
               <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Age</th>
-              <th>Course</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Due Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {students.length > 0 ? (
-              students.map((student) => (
-                <tr key={student.id}>
-                  <td>{student.id}</td>
-                  <td>{student.name}</td>
-                  <td>{student.email}</td>
-                  <td>{student.age}</td>
-                  <td>{student.course}</td>
+            {tasks.length > 0 ? (
+              tasks.map((task) => (
+                <tr key={task.id}>
+                  <td>{task.id}</td>
+                  <td>{task.title}</td>
+                  <td>{task.description}</td>
+                  <td>{task.status}</td>
+                  <td>{task.due_date}</td>
                   <td>
                     <Button
                       variant="warning"
                       size="sm"
                       className="me-2"
-                      onClick={() => handleEdit(student)}
+                      onClick={() => handleEdit(task)}
                     >
                       Edit
                     </Button>
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleDelete(student.id)}
+                      onClick={() => handleDelete(task.id)}
                     >
                       Delete
                     </Button>
@@ -131,8 +139,8 @@ const StudentManager = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center">
-                  No students found.
+                <td colSpan={6} className="text-center">
+                  No tasks found.
                 </td>
               </tr>
             )}
@@ -143,52 +151,57 @@ const StudentManager = () => {
       {/* Modal for Add/Edit */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>{editingId ? "Edit Student" : "Add Student"}</Modal.Title>
+          <Modal.Title>{editingId ? "Edit Task" : "Add Task"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>Title</Form.Label>
               <Form.Control
                 type="text"
-                name="name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                name="title"
+                value={form.title}
+                onChange={handleFormChange}
                 required
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>Description</Form.Label>
               <Form.Control
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
+                as="textarea"
+                rows={3}
+                name="description"
+                value={form.description}
+                onChange={handleFormChange}
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Age</Form.Label>
-              <Form.Control
-                type="number"
-                name="age"
-                value={form.age}
-                onChange={(e) => setForm({ ...form, age: e.target.value })}
-                required
-              />
+              <Form.Label>Status</Form.Label>
+              <Form.Select
+                name="status"
+                value={form.status}
+                onChange={handleFormChange}
+              >
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </Form.Select>
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label>Course</Form.Label>
+              <Form.Label>Due Date</Form.Label>
               <Form.Control
-                type="text"
-                name="course"
-                value={form.course}
-                onChange={(e) => setForm({ ...form, course: e.target.value })}
-                required
+                type="date"
+                name="due_date"
+                value={form.due_date}
+                onChange={handleFormChange}
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="w-100">
-              {editingId ? "Update" : "Save"}
+
+            <Button variant="primary" type="submit" className="w-100" disabled={loading}>
+              {editingId ? "Update Task" : "Save Task"}
             </Button>
           </Form>
         </Modal.Body>
