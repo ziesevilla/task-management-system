@@ -8,18 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('students', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->integer('age');
-            $table->string('course');
-            $table->timestamps();
-        });
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id(); // Primary key
+            $table->string('title'); // Task title
+            $table->text('description')->nullable(); // Task description, can be null
+            $table->enum('status', ['pending', 'in-progress', 'completed'])->default('pending'); // Task status
+            $table->date('due_date')->nullable(); // Optional due date
+            $table->timestamps(); // created_at and updated_at
+});
+
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('students');
+        Schema::dropIfExists('tasks');
     }
 };
